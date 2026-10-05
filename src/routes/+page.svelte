@@ -1,10 +1,12 @@
 <script>
-  /** @type {Array<{id: number, name: string, description: string, price: number, stock: number}>} */
+  import { onMount } from "svelte";
+
+  /** @type {Array<{id: number, name: string, description: string, price: number, stock: number, category: string}>} */
   let products = $state([]);
   let loading = $state(true);
   let error = $state("");
 
-  async function getProducts() {
+  onMount(async () => {
     try {
       const response = await fetch("http://localhost:3000/products");
 
@@ -18,9 +20,7 @@
     } finally {
       loading = false;
     }
-  }
-
-  getProducts();
+  });
 </script>
 
 <h1>My E-Commerce Store</h1>
@@ -33,11 +33,9 @@
   {#each products as product}
     <div>
       <h2>{product.name}</h2>
-
       <p>{product.description}</p>
-
       <p>€{product.price}</p>
-
+      <p>Category: {product.category}</p>
       <p>Stock: {product.stock}</p>
     </div>
   {/each}

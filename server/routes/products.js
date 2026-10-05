@@ -5,91 +5,53 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM products');
+        const result = await pool.query(`
+            SELECT
+                products.id,
+                products.name,
+                products.description,
+                products.price,
+                products.stock,
+                products.category_id,
+                categories.name AS category
+            FROM products
+            JOIN categories
+                ON products.category_id = categories.id
+            ORDER BY products.id
+        `);
+
         res.json(result.rows);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error fetching products' });
+        res.status(500).json({ error: 'Failed to fetch products' });
     }
 });
 
 router.get('/:id', async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT * FROM products WHERE id = $1',
-            [req.params.id]
-        );
+        const result = await pool.query(`
+            SELECT
+                products.id,
+                products.name,
+                products.description,
+                products.price,
+                products.stock,
+                products.category_id,
+                categories.name AS category
+            FROM products
+            JOIN categories
+                ON products.category_id = categories.id
+            WHERE products.id = $1
+        `, [req.params.id]);
 
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
+            return res.status(404).json({ error: 'Product not found' });
         }
 
         res.json(result.rows[0]);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error fetching product' });
-    }
-});
-
-router.post('/', async (req, res) => {
-    try {
-        const { name, description, price, stock } = req.body;
-
-        const result = await pool.query(
-            `INSERT INTO products (name, description, price, stock)
-             VALUES ($1, $2, $3, $4)
-             RETURNING *`,
-            [name, description, price, stock]
-        );
-
-        res.status(201).json(result.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error creating product' });
-    }
-});
-
-router.put('/:id', async (req, res) => {
-    try {
-        const { name, description, price, stock } = req.body;
-
-        const result = await pool.query(
-            `UPDATE products
-             SET name = $1, description = $2, price = $3, stock = $4
-             WHERE id = $5
-             RETURNING *`,
-            [name, description, price, stock, req.params.id]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error updating product' });
-    }
-});
-
-router.delete('/:id', async (req, res) => {
-    try {
-        const result = await pool.query(
-            'DELETE FROM products WHERE id = $1 RETURNING *',
-            [req.params.id]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        res.json({
-            message: 'Product deleted successfully',
-            product: result.rows[0]
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error deleting product' });
+        res.status(500).json({ error: 'Failed to fetch product' });
     }
 });
 
